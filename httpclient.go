@@ -16,13 +16,17 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-type HTTPClient interface {
+// Requester defines the interface for making HTTP requests
+type Requester interface {
 	Get(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Post(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Put(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Patch(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Delete(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 }
+
+// Ensure Client implements Requester
+var _ Requester = (*Client)(nil)
 
 type Client struct {
 	baseURL    string
@@ -107,6 +111,26 @@ func WithBodyRequest(body interface{}) RequestOption {
 	}
 }
 
+func (c *Client) Get(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
+	return c.do(ctx, http.MethodGet, path, opts...)
+}
+
+func (c *Client) Post(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
+	return c.do(ctx, http.MethodPost, path, opts...)
+}
+
+func (c *Client) Put(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
+	return c.do(ctx, http.MethodPut, path, opts...)
+}
+
+func (c *Client) Patch(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
+	return c.do(ctx, http.MethodPatch, path, opts...)
+}
+
+func (c *Client) Delete(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
+	return c.do(ctx, http.MethodDelete, path, opts...)
+}
+
 func (c *Client) do(ctx context.Context, method, path string, opts ...RequestOption) ([]byte, error) {
 	var respBody []byte
 	operation := func() error {
@@ -173,24 +197,4 @@ func (c *Client) do(ctx context.Context, method, path string, opts ...RequestOpt
 	}
 
 	return respBody, nil
-}
-
-func (c *Client) Get(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.do(ctx, http.MethodGet, path, opts...)
-}
-
-func (c *Client) Post(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.do(ctx, http.MethodPost, path, opts...)
-}
-
-func (c *Client) Put(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.do(ctx, http.MethodPut, path, opts...)
-}
-
-func (c *Client) Patch(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.do(ctx, http.MethodPatch, path, opts...)
-}
-
-func (c *Client) Delete(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.do(ctx, http.MethodDelete, path, opts...)
 }
