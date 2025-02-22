@@ -17,7 +17,6 @@ import (
 )
 
 type HTTPClient interface {
-	Do(ctx context.Context, method, path string, opts ...RequestOption) ([]byte, error)
 	Get(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Post(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
 	Put(ctx context.Context, path string, opts ...RequestOption) ([]byte, error)
@@ -108,7 +107,7 @@ func WithBodyRequest(body interface{}) RequestOption {
 	}
 }
 
-func (c *Client) Do(ctx context.Context, method, path string, opts ...RequestOption) ([]byte, error) {
+func (c *Client) do(ctx context.Context, method, path string, opts ...RequestOption) ([]byte, error) {
 	var respBody []byte
 	operation := func() error {
 		txn := newrelic.FromContext(ctx)
@@ -177,21 +176,21 @@ func (c *Client) Do(ctx context.Context, method, path string, opts ...RequestOpt
 }
 
 func (c *Client) Get(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.Do(ctx, http.MethodGet, path, opts...)
+	return c.do(ctx, http.MethodGet, path, opts...)
 }
 
 func (c *Client) Post(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.Do(ctx, http.MethodPost, path, opts...)
+	return c.do(ctx, http.MethodPost, path, opts...)
 }
 
 func (c *Client) Put(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.Do(ctx, http.MethodPut, path, opts...)
+	return c.do(ctx, http.MethodPut, path, opts...)
 }
 
 func (c *Client) Patch(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.Do(ctx, http.MethodPatch, path, opts...)
+	return c.do(ctx, http.MethodPatch, path, opts...)
 }
 
 func (c *Client) Delete(ctx context.Context, path string, opts ...RequestOption) ([]byte, error) {
-	return c.Do(ctx, http.MethodDelete, path, opts...)
+	return c.do(ctx, http.MethodDelete, path, opts...)
 }
