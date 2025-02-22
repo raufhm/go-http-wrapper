@@ -2,11 +2,12 @@ package go_http_wrapper
 
 import (
 	"context"
-	"github.com/cenkalti/backoff/v4"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/cenkalti/backoff/v4"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -63,10 +64,12 @@ func TestClient_Post(t *testing.T) {
 
 func TestClient_RetryWithBackoff(t *testing.T) {
 	attempts := 0
+	maxRetries := 2 // Changed to 2 to match the test scenario
+
 	// Create test server that fails twice then succeeds
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		attempts++
-		if attempts <= 2 {
+		if attempts <= maxRetries {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
@@ -77,7 +80,7 @@ func TestClient_RetryWithBackoff(t *testing.T) {
 
 	// Create client with custom backoff
 	client := New(ts.URL,
-		WithBackoff(newTestBackoff(3, 10*time.Millisecond)),
+		WithBackoff(newTestBackoff(maxRetries, 100*time.Millisecond)),
 	)
 
 	// Test retry behavior
@@ -85,9 +88,11 @@ func TestClient_RetryWithBackoff(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, []byte(`{"message":"ok"}`), resp)
-	assert.Equal(t, 3, attempts)
+	assert.Equal(t, maxRetries+1, attempts) // +1 for the successful attempt
 }
 
-func newTestBackoff(maxRetries int, interval time.Duration) *backoff.ConstantBackOff {
-	return backoff.NewConstantBackOff(interval)
+// Updated helper function to properly handle maxRetries
+func newTestBackoff(maxRetries int, interval time.Duration) backoff.BackOff {
+	b := backoff.NewConstantBackOff(interval)
+	return backoff.WithMaxRetries(b, uint64(maxRetries))
 }
